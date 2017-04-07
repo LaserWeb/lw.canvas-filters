@@ -189,7 +189,7 @@ function canvasFilters(canvas, settings) {
     }
 
     if (settings.dithering) {
-        FloydSteinberg(imageData)
+        imageData = FloydSteinberg(imageData)
     }
 
     // Write new image data on the context

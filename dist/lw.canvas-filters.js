@@ -262,7 +262,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    if (settings.dithering) {
-	        (0, _floydSteinberg2.default)(imageData);
+	        imageData = (0, _floydSteinberg2.default)(imageData);
 	    }
 	
 	    // Write new image data on the context
