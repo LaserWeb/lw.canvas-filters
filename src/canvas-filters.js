@@ -1,3 +1,5 @@
+import FloydSteinberg from 'floyd-steinberg'
+
 // Grayscale algorithms
 const grayscaleAlgorithms = [
     'none',
@@ -135,7 +137,8 @@ function canvasFilters(canvas, settings) {
         gamma       : 0,      // Image gamma correction [0.01 to 7.99]
         grayscale   : 'none', // Graysale algorithm [average, luma, luma-601, luma-709, luma-240, desaturation, decomposition-[min|max], [red|green|blue]-chanel]
         shadesOfGray: 256,    // Number of shades of gray [2-256]
-        invertColor : false   // Invert color...
+        invertColor : false,   // Invert color...
+        dithering   : false
     }, settings || {})
 
     // Get canvas 2d context
@@ -183,6 +186,10 @@ function canvasFilters(canvas, settings) {
         contrast(data, i, contrastFactor)
         gamma(data, i, gammaCorrection)
         grayscale(data, i, settings.grayscale, shadesOfGrayFactor)
+    }
+
+    if (settings.dithering) {
+        FloydSteinberg(imageData)
     }
 
     // Write new image data on the context

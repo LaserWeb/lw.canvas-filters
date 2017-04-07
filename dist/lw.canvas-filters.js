@@ -59,13 +59,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 1 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	exports.canvasFilters = undefined;
+	
+	var _floydSteinberg = __webpack_require__(2);
+	
+	var _floydSteinberg2 = _interopRequireDefault(_floydSteinberg);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
 	// Grayscale algorithms
 	var grayscaleAlgorithms = ['none', 'average', 'desaturation', 'decomposition-min', 'decomposition-max', 'luma', 'luma-601', 'luma-709', 'luma-240', 'red-chanel', 'green-chanel', 'blue-chanel'];
 	
@@ -200,7 +208,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        gamma: 0, // Image gamma correction [0.01 to 7.99]
 	        grayscale: 'none', // Graysale algorithm [average, luma, luma-601, luma-709, luma-240, desaturation, decomposition-[min|max], [red|green|blue]-chanel]
 	        shadesOfGray: 256, // Number of shades of gray [2-256]
-	        invertColor: false // Invert color...
+	        invertColor: false, // Invert color...
+	        dithering: false
 	    }, settings || {});
 	
 	    // Get canvas 2d context
@@ -252,6 +261,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        grayscale(data, i, settings.grayscale, shadesOfGrayFactor);
 	    }
 	
+	    if (settings.dithering) {
+	        (0, _floydSteinberg2.default)(imageData);
+	    }
+	
 	    // Write new image data on the context
 	    context.putImageData(imageData, 0, 0);
 	}
@@ -259,6 +272,63 @@ return /******/ (function(modules) { // webpackBootstrap
 	// Exports
 	exports.canvasFilters = canvasFilters;
 	exports.default = canvasFilters;
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	/*
+	 * floyd-steinberg
+	 *
+	 * Using 2D error diffusion formula published by Robert Floyd and Louis Steinberg in 1976
+	 *
+	 * Javascript implementation of Floyd-Steinberg algorithm thanks to Forrest Oliphant @forresto and @meemoo 
+	 * via iFramework https://github.com/meemoo/iframework/blob/master/src/nodes/image-monochrome-worker.js
+	 *
+	 * Accepts an object that complies with the HTML5 canvas imageData spec https://developer.mozilla.org/en-US/docs/Web/API/ImageData
+	 * In particular, it makes use of the width, height, and data properties
+	 *
+	 * License: MIT
+	*/
+	
+	module.exports = floyd_steinberg;
+	
+	function floyd_steinberg(image) {
+	  var imageData = image.data;
+	  var imageDataLength = imageData.length;
+	  var w = image.width;
+	  var lumR = [],
+	      lumG = [],
+	      lumB = [];
+	
+	  var newPixel, err;
+	
+	  for (var i = 0; i < 256; i++) {
+	    lumR[i] = i * 0.299;
+	    lumG[i] = i * 0.587;
+	    lumB[i] = i * 0.110;
+	  }
+	
+	  // Greyscale luminance (sets r pixels to luminance of rgb)
+	  for (var i = 0; i <= imageDataLength; i += 4) {
+	    imageData[i] = Math.floor(lumR[imageData[i]] + lumG[imageData[i+1]] + lumB[imageData[i+2]]);
+	  }
+	
+	  for (var currentPixel = 0; currentPixel <= imageDataLength; currentPixel += 4) {
+	    // threshold for determining current pixel's conversion to a black or white pixel
+	    newPixel = imageData[currentPixel] < 150 ? 0 : 255;
+	    err = Math.floor((imageData[currentPixel] - newPixel) / 23);
+	    imageData[currentPixel] = newPixel;
+	    imageData[currentPixel + 4         ] += err * 7;
+	    imageData[currentPixel + 4 * w - 4 ] += err * 3;
+	    imageData[currentPixel + 4 * w     ] += err * 5;
+	    imageData[currentPixel + 4 * w + 4 ] += err * 1;
+	    // Set g and b pixels equal to r (effectively greyscales the image fully)
+	    imageData[currentPixel + 1] = imageData[currentPixel + 2] = imageData[currentPixel];
+	  }
+	
+	  return image;
+	}
 
 /***/ }
 /******/ ])
